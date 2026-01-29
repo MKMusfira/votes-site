@@ -1,23 +1,24 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
-const Voter = require("./models/Voter");
 const cors = require("cors");
+const path = require("path");
+const Voter = require("./models/Voter");
 
 const app = express();
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
+// Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
-  .catch(err => console.log(err));
+  .catch(err => console.log("MongoDB error:", err.message));
 
-// health check
-app.get("/", (req, res) => {
-  res.send("Voter API is running");
-});
+// ===== VOTERS API ===== //
 
-// 1️⃣ Get all voters (or search)
+// Get all voters (with optional search)
 app.get("/voters", async (req, res) => {
   const { q } = req.query;
   let filter = {};
@@ -33,7 +34,7 @@ app.get("/voters", async (req, res) => {
   res.json(voters);
 });
 
-// 2️⃣ Mark voter as voted
+// Mark voter as voted
 app.post("/voters/:id/vote", async (req, res) => {
   try {
     const voter = await Voter.findByIdAndUpdate(
@@ -47,5 +48,14 @@ app.post("/voters/:id/vote", async (req, res) => {
   }
 });
 
+// ===== SERVE REACT FRONTEND ===== //
+const buildPath = path.join(__dirname, "../frontend/build");
+app.use(express.static(buildPath));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(buildPath, "index.html"));
+});
+
+// ===== START SERVER ===== //
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
