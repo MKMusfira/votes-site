@@ -8,16 +8,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-
 mongoose.connect(process.env.MONGO_URI)
-.then(() => console.log("MongoDB connected"))
-.catch(err => console.log(err));
+  .then(() => console.log("MongoDB connected"))
+  .catch(err => console.log(err));
 
-
+// health check
+app.get("/", (req, res) => {
+  res.send("Voter API is running");
+});
 
 // 1️⃣ Get all voters (or search)
 app.get("/voters", async (req, res) => {
-  const { q } = req.query; // search query
+  const { q } = req.query;
   let filter = {};
   if (q) {
     filter = {
@@ -45,5 +47,5 @@ app.post("/voters/:id/vote", async (req, res) => {
   }
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
